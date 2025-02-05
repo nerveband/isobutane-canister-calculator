@@ -1,6 +1,6 @@
 # Isobutane Canister Calculator
 
-A web-based calculator to determine the remaining fuel in isobutane canisters commonly used for camping and outdoor activities. Made by [Ashraf Ali](https://ashrafali.net).
+I created this web-based calculator to help determine the remaining fuel in isobutane canisters commonly used for camping and outdoor activities. I'm [Ashraf Ali](https://ashrafali.net).
 
 ## Features
 
@@ -75,4 +75,4 @@ MIT License - See LICENSE file for details.
 
 ## Author
 
-Made by [Ashraf Ali](https://ashrafali.net) 
+Created by me, [Ashraf Ali](https://ashrafali.net) 

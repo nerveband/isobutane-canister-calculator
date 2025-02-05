@@ -7,6 +7,9 @@ import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Switch } from "@/components/ui/switch";
 import { getCanisterData, CanisterDataMap } from '@/adapters/canisterAdapter';
+import { TabNavigation } from '@/components/layout/TabNavigation';
+import { About } from '@/components/About';
+import { Flame, Scale, Percent, Info, AlertTriangle, CheckCircle2, Fuel } from 'lucide-react';
 
 const CANISTER_DATA = {
   "MSR-110": { brand: "MSR", fuelWeight: 110, weights: [101, 129, 156, 184, 211] },
@@ -46,6 +49,7 @@ const IsobutaneCalculator = () => {
   const [canisterDataMap, setCanisterDataMap] = useState<CanisterDataMap | null>(null);
   const [weightError, setWeightError] = useState<string | null>(null);
   const [weightWarning, setWeightWarning] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<'calculator' | 'about'>('calculator');
 
   // Add effect to validate weight whenever it changes
   useEffect(() => {
@@ -209,157 +213,191 @@ const IsobutaneCalculator = () => {
   }
 
   return (
-    <Card className="w-full max-w-md">
-      <CardHeader>
-        <div className="flex justify-between items-center">
-          <CardTitle className="text-xl font-bold">Isobutane Calculator</CardTitle>
-          <div className="flex items-center space-x-2">
-            <Label htmlFor="unit-toggle" className="text-sm">g</Label>
-            <Switch
-              id="unit-toggle"
-              checked={useOunces}
-              onCheckedChange={setUseOunces}
-              className="data-[state=checked]:bg-orange-500"
-            />
-            <Label htmlFor="unit-toggle" className="text-sm">oz</Label>
-          </div>
-        </div>
-      </CardHeader>
-      <CardContent>
-        <div className="space-y-6">
-          <div className="space-y-4">
-            <div>
-              <Label className="mb-2 block">Brand</Label>
-              <div className="grid grid-cols-2 gap-2">
-                {uniqueBrands.map((brand) => (
-                  <button
-                    key={brand}
-                    onClick={() => setSelectedBrand(brand)}
-                    className={`p-2 text-sm rounded-md border transition-colors
-                      ${selectedBrand === brand 
-                        ? 'bg-orange-500 text-white border-orange-500' 
-                        : 'border-orange-200 hover:border-orange-500'
-                      }`}
-                  >
-                    {brand}
-                  </button>
-                ))}
+    <div className="w-full max-w-7xl mx-auto px-1 sm:px-6 lg:px-8 py-1 sm:py-8">
+      <TabNavigation activeTab={activeTab} onTabChange={setActiveTab} />
+      
+      {activeTab === 'about' ? (
+        <About />
+      ) : (
+        <Card className="w-full max-w-4xl mx-auto">
+          <CardHeader className="p-2 sm:p-6">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center space-y-2 sm:space-y-0">
+              <div className="flex items-center space-x-3">
+                <Fuel className="w-6 h-6 text-orange-500" />
+                <CardTitle className="text-xl font-bold">Isobutane Calculator</CardTitle>
+              </div>
+              <div className="flex items-center space-x-2">
+                <Label htmlFor="unit-toggle" className="text-sm">g</Label>
+                <Switch
+                  id="unit-toggle"
+                  checked={useOunces}
+                  onCheckedChange={setUseOunces}
+                  className="data-[state=checked]:bg-orange-500"
+                />
+                <Label htmlFor="unit-toggle" className="text-sm">oz</Label>
               </div>
             </div>
-
-            {selectedBrand && (
-              <div>
-                <Label className="mb-2 block">Model</Label>
-                <div className="grid grid-cols-1 gap-2">
-                  {brandModels[selectedBrand]?.map(({ id, fuelWeight }) => (
-                    <button
-                      key={id}
-                      onClick={() => setSelectedModel(id)}
-                      className={`p-2 text-sm rounded-md border transition-colors text-left
-                        ${selectedModel === id 
-                          ? 'bg-orange-500 text-white border-orange-500' 
-                          : 'border-orange-200 hover:border-orange-500'
-                        }`}
-                    >
-                      {useOunces ? gramsToOz(fuelWeight) : fuelWeight}{useOunces ? 'oz' : 'g'} canister
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="weight">Current Weight ({useOunces ? 'oz' : 'g'})</Label>
-            <Input
-              id="weight"
-              type="number"
-              step={useOunces ? "0.01" : "1"}
-              placeholder={`Enter weight in ${useOunces ? 'ounces' : 'grams'}`}
-              value={currentWeight}
-              onChange={(e) => setCurrentWeight(e.target.value)}
-              className={`w-full border-2 transition-colors ${
-                weightError ? 'border-red-500 focus:ring-red-500 bg-red-50' :
-                weightWarning ? 'border-yellow-500 focus:ring-yellow-500 bg-yellow-50' :
-                'border-orange-200 focus:ring-orange-500'
-              }`}
-            />
-            {selectedModel && canisterDataMap[selectedModel] && (
-              <p className="text-sm text-gray-500 mt-1">
-                Valid range: {useOunces 
-                  ? `${gramsToOz(canisterDataMap[selectedModel].weights[0])}oz - ${gramsToOz(canisterDataMap[selectedModel].weights[4])}oz`
-                  : `${canisterDataMap[selectedModel].weights[0]}g - ${canisterDataMap[selectedModel].weights[4]}g`}
-              </p>
-            )}
-          </div>
-
-          {weightError && (
-            <Alert className="border-red-500 bg-red-50 text-red-800">
-              <AlertDescription>{weightError}</AlertDescription>
-            </Alert>
-          )}
-
-          {weightWarning && !weightError && (
-            <Alert className="border-yellow-500 bg-yellow-50 text-yellow-800">
-              <AlertDescription>{weightWarning}</AlertDescription>
-            </Alert>
-          )}
-
-          {result && (
-            <div className="space-y-4">
-              <div className="bg-orange-50 p-4 rounded-lg">
-                <h3 className="font-semibold mb-2">Canister Details</h3>
-                <p className="text-sm font-medium text-gray-900 mb-2">
-                  {canisterDataMap[selectedModel].brand} - {useOunces ? gramsToOz(canisterDataMap[selectedModel].fuelWeight) : canisterDataMap[selectedModel].fuelWeight}{useOunces ? 'oz' : 'g'} canister
-                </p>
-                <div className="space-y-1">
-                  <p className="text-sm text-gray-600">
-                    Empty Weight: {result.emptyWeight}{useOunces ? 'oz' : 'g'}
-                  </p>
-                  <p className="text-sm text-gray-600">
-                    Total Fuel When Full: {result.totalFuel}{useOunces ? 'oz' : 'g'}
-                  </p>
-                  <p className="text-sm text-gray-600">
-                    Total Weight When Full: {result.fullWeight}{useOunces ? 'oz' : 'g'}
-                  </p>
-                </div>
-              </div>
-
-              <div className="space-y-3">
+          </CardHeader>
+          <CardContent className="p-2 sm:p-6">
+            <div className="space-y-3 sm:space-y-6">
+              <div className="space-y-3 sm:space-y-4">
                 <div>
-                  <h3 className="font-semibold mb-1">Remaining Fuel</h3>
-                  <p className="text-2xl font-bold text-orange-500">
-                    {result.remainingFuel}{useOunces ? 'oz' : 'g'}
-                  </p>
-                </div>
-
-                <div>
-                  <h3 className="font-semibold mb-1">Fuel Percentage</h3>
-                  <div className="relative pt-1">
-                    <div className="flex mb-2 items-center justify-between">
-                      <div>
-                        <span className="text-2xl font-bold text-orange-500">
-                          {result.percentage}%
-                        </span>
-                      </div>
-                    </div>
-                    <div className="overflow-hidden h-2 mb-4 text-xs flex rounded bg-orange-100">
-                      <div 
-                        style={{ width: `${result.percentage}%` }}
-                        className="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-orange-500"
-                      />
-                    </div>
+                  <Label className="mb-2 block flex items-center space-x-2">
+                    <Flame className="w-4 h-4 text-orange-500" />
+                    <span>Brand</span>
+                  </Label>
+                  <div className="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-1.5 sm:gap-2">
+                    {uniqueBrands.map((brand) => (
+                      <button
+                        key={brand}
+                        onClick={() => setSelectedBrand(brand)}
+                        className={`p-2 text-sm rounded-md border transition-colors
+                          ${selectedBrand === brand 
+                            ? 'bg-orange-500 text-white border-orange-500' 
+                            : 'border-orange-200 hover:border-orange-500'
+                          }`}
+                      >
+                        {brand}
+                      </button>
+                    ))}
                   </div>
                 </div>
+
+                {selectedBrand && (
+                  <div>
+                    <Label className="mb-2 block flex items-center space-x-2">
+                      <Fuel className="w-4 h-4 text-orange-500" />
+                      <span>Model</span>
+                    </Label>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-1.5 sm:gap-2">
+                      {brandModels[selectedBrand]?.map(({ id, fuelWeight }) => (
+                        <button
+                          key={id}
+                          onClick={() => setSelectedModel(id)}
+                          className={`p-2 text-sm rounded-md border transition-colors text-left
+                            ${selectedModel === id 
+                              ? 'bg-orange-500 text-white border-orange-500' 
+                              : 'border-orange-200 hover:border-orange-500'
+                            }`}
+                        >
+                          {useOunces ? gramsToOz(fuelWeight) : fuelWeight}{useOunces ? 'oz' : 'g'} canister
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
+
+              {selectedModel && (
+                <>
+                  <div className="space-y-2">
+                    <Label htmlFor="weight" className="flex items-center space-x-2">
+                      <Scale className="w-4 h-4 text-orange-500" />
+                      <span>Current Weight ({useOunces ? 'oz' : 'g'})</span>
+                    </Label>
+                    <Input
+                      id="weight"
+                      type="number"
+                      inputMode="decimal"
+                      step={useOunces ? "0.01" : "1"}
+                      placeholder={`Enter weight in ${useOunces ? 'ounces' : 'grams'}`}
+                      value={currentWeight}
+                      onChange={(e) => setCurrentWeight(e.target.value)}
+                      className={`w-full border-2 transition-colors ${
+                        weightError ? 'border-red-500 focus:ring-red-500 bg-red-50' :
+                        weightWarning ? 'border-yellow-500 focus:ring-yellow-500 bg-yellow-50' :
+                        'border-orange-200 focus:ring-orange-500'
+                      }`}
+                    />
+                    <p className="text-xs sm:text-sm text-gray-500 mt-1">
+                      Valid range: {useOunces 
+                        ? `${gramsToOz(canisterDataMap[selectedModel].weights[0])}oz - ${gramsToOz(canisterDataMap[selectedModel].weights[4])}oz`
+                        : `${canisterDataMap[selectedModel].weights[0]}g - ${canisterDataMap[selectedModel].weights[4]}g`}
+                    </p>
+                  </div>
+
+                  {weightError && (
+                    <Alert className="border-red-500 bg-red-50 text-red-800 text-sm">
+                      <AlertTriangle className="w-4 h-4 shrink-0" />
+                      <AlertDescription>{weightError}</AlertDescription>
+                    </Alert>
+                  )}
+
+                  {weightWarning && !weightError && (
+                    <Alert className="border-yellow-500 bg-yellow-50 text-yellow-800 text-sm">
+                      <AlertTriangle className="w-4 h-4 shrink-0" />
+                      <AlertDescription>{weightWarning}</AlertDescription>
+                    </Alert>
+                  )}
+
+                  {result && (
+                    <div className="space-y-4">
+                      <div className="bg-orange-50 p-3 sm:p-4 rounded-lg">
+                        <h3 className="font-semibold mb-2 flex items-center space-x-2 text-sm sm:text-base">
+                          <Info className="w-4 h-4 text-orange-500 shrink-0" />
+                          <span>Canister Details</span>
+                        </h3>
+                        <p className="text-sm font-medium text-gray-900 mb-2">
+                          {canisterDataMap[selectedModel].brand} - {useOunces ? gramsToOz(canisterDataMap[selectedModel].fuelWeight) : canisterDataMap[selectedModel].fuelWeight}{useOunces ? 'oz' : 'g'} canister
+                        </p>
+                        <div className="space-y-1 text-xs sm:text-sm">
+                          <p className="text-gray-600">
+                            Empty Weight: {result.emptyWeight}{useOunces ? 'oz' : 'g'}
+                          </p>
+                          <p className="text-gray-600">
+                            Total Fuel When Full: {result.totalFuel}{useOunces ? 'oz' : 'g'}
+                          </p>
+                          <p className="text-gray-600">
+                            Total Weight When Full: {result.fullWeight}{useOunces ? 'oz' : 'g'}
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="space-y-3">
+                        <div>
+                          <h3 className="font-semibold mb-1 flex items-center space-x-2 text-sm sm:text-base">
+                            <Fuel className="w-4 h-4 text-orange-500 shrink-0" />
+                            <span>Remaining Fuel</span>
+                          </h3>
+                          <p className="text-xl sm:text-2xl font-bold text-orange-500">
+                            {result.remainingFuel}{useOunces ? 'oz' : 'g'}
+                          </p>
+                        </div>
+
+                        <div>
+                          <h3 className="font-semibold mb-1 flex items-center space-x-2 text-sm sm:text-base">
+                            <Percent className="w-4 h-4 text-orange-500 shrink-0" />
+                            <span>Fuel Percentage</span>
+                          </h3>
+                          <div className="relative pt-1">
+                            <div className="flex mb-2 items-center justify-between">
+                              <div>
+                                <span className="text-xl sm:text-2xl font-bold text-orange-500">
+                                  {result.percentage}%
+                                </span>
+                              </div>
+                            </div>
+                            <div className="overflow-hidden h-2 mb-4 text-xs flex rounded bg-orange-100">
+                              <div 
+                                style={{ width: `${result.percentage}%` }}
+                                className="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-orange-500"
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </>
+              )}
             </div>
-          )}
-        </div>
-      </CardContent>
-      <div className="text-center p-4 text-sm text-gray-500">
-        Made by <a href="https://ashrafali.net" target="_blank" rel="noopener noreferrer" className="text-orange-500 hover:text-orange-600">Ashraf Ali</a>
-      </div>
-    </Card>
+          </CardContent>
+          <div className="text-center p-2 sm:p-4 text-xs sm:text-sm text-gray-500">
+            Made by <a href="https://ashrafali.net" target="_blank" rel="noopener noreferrer" className="text-orange-500 hover:text-orange-600">Ashraf Ali</a>
+          </div>
+        </Card>
+      )}
+    </div>
   );
 };
 

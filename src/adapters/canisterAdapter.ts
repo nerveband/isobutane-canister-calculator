@@ -8,7 +8,67 @@ export type CanisterDataMap = {
   [key: string]: CanisterData;
 };
 
+// Calculate averages for generic canisters based on common sizes
+const genericData = {
+  "100": {
+    empty: Math.round([100, 100, 98, 102, 101].reduce((a, b) => a + b) / 5),
+    quarter: Math.round([125, 125, 123, 127, 126].reduce((a, b) => a + b) / 5),
+    half: Math.round([150, 150, 148, 152, 151].reduce((a, b) => a + b) / 5),
+    threeQuarter: Math.round([175, 175, 173, 177, 176].reduce((a, b) => a + b) / 5),
+    full: Math.round([200, 200, 198, 202, 201].reduce((a, b) => a + b) / 5)
+  },
+  "230": {
+    empty: Math.round([150, 150, 160, 149, 135].reduce((a, b) => a + b) / 5),
+    quarter: Math.round([208, 208, 218, 207, 193].reduce((a, b) => a + b) / 5),
+    half: Math.round([265, 265, 275, 264, 250].reduce((a, b) => a + b) / 5),
+    threeQuarter: Math.round([323, 323, 333, 322, 308].reduce((a, b) => a + b) / 5),
+    full: Math.round([380, 380, 390, 379, 365].reduce((a, b) => a + b) / 5)
+  },
+  "450": {
+    empty: Math.round([210, 213, 202, 195, 180].reduce((a, b) => a + b) / 5),
+    quarter: Math.round([323, 326, 315, 308, 293].reduce((a, b) => a + b) / 5),
+    half: Math.round([435, 438, 427, 420, 405].reduce((a, b) => a + b) / 5),
+    threeQuarter: Math.round([548, 551, 540, 533, 518].reduce((a, b) => a + b) / 5),
+    full: Math.round([660, 663, 652, 645, 630].reduce((a, b) => a + b) / 5)
+  }
+};
+
 const staticCanisterData: CanisterDataMap = {
+  // Generic/Unknown brand first with averaged data
+  "Generic-100": { 
+    brand: "Generic/Unknown", 
+    fuelWeight: 100, 
+    weights: [
+      genericData["100"].empty,
+      genericData["100"].quarter,
+      genericData["100"].half,
+      genericData["100"].threeQuarter,
+      genericData["100"].full
+    ]
+  },
+  "Generic-230": { 
+    brand: "Generic/Unknown", 
+    fuelWeight: 230, 
+    weights: [
+      genericData["230"].empty,
+      genericData["230"].quarter,
+      genericData["230"].half,
+      genericData["230"].threeQuarter,
+      genericData["230"].full
+    ]
+  },
+  "Generic-450": { 
+    brand: "Generic/Unknown", 
+    fuelWeight: 450, 
+    weights: [
+      genericData["450"].empty,
+      genericData["450"].quarter,
+      genericData["450"].half,
+      genericData["450"].threeQuarter,
+      genericData["450"].full
+    ]
+  },
+  // Rest of the brands
   "MSR-110": { brand: "MSR", fuelWeight: 110, weights: [101, 129, 156, 184, 211] },
   "MSR-227": { brand: "MSR", fuelWeight: 227, weights: [147, 204, 261, 317, 374] },
   "MSR-450": { brand: "MSR", fuelWeight: 450, weights: [210, 323, 435, 548, 660] },
