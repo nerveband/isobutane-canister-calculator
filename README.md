@@ -1,28 +1,55 @@
 # Isobutane Canister Calculator
 
-A web-based calculator for determining remaining fuel in isobutane canisters, helping outdoor enthusiasts better plan their trips and manage fuel usage.
+A web-based calculator to determine the remaining fuel in isobutane canisters commonly used for camping and outdoor activities. Made by [Ashraf Ali](https://ashrafali.net).
 
 ## Features
 
-- Calculate remaining fuel amount in partially used canisters
-- Show percentage of fuel remaining
-- Estimate burn time based on common stove types
-- Visual representation of remaining fuel levels
-- Offline capable
+- Support for multiple brands (MSR, Jet Boil, GSI, Coleman, etc.)
+- Multiple canister sizes (110g, 230g, 450g, etc.)
+- Real-time weight validation
+- Conversion between grams and ounces
+- Visual fuel level indicator
+- Detailed canister information
 - Mobile-friendly interface
 
-## Getting Started
+## Supported Brands
 
-### Prerequisites
+- MSR
+- Jet Boil
+- GSI
+- Coleman Performance
+- Coleman XTREME
+- Energy by Optimus
+- Giga Power
+- Primus Power Gas
+- Primus Summer Gas
+- Primus Cold Gas
+- Perune
 
-- Node.js (v18 or higher)
-- npm or yarn package manager
+## How to Use
 
-### Installation
+1. Select your canister brand
+2. Choose your canister model
+3. Enter the current weight of your canister
+4. View the remaining fuel amount and percentage
+5. Toggle between grams and ounces as needed
+
+The calculator will automatically validate your input and warn you if the weight is outside the expected range for your canister.
+
+## Development
+
+This project is built with:
+- Next.js 14
+- React
+- TypeScript
+- Tailwind CSS
+- shadcn/ui components
+
+### Getting Started
 
 1. Clone the repository:
 ```bash
-git clone https://github.com/nerveband/isobutane-canister-calculator.git
+git clone https://github.com/yourusername/isobutane-canister-calculator.git
 cd isobutane-canister-calculator
 ```
 
@@ -31,17 +58,12 @@ cd isobutane-canister-calculator
 npm install
 ```
 
-3. Start the development server:
+3. Run the development server:
 ```bash
 npm run dev
 ```
 
-## Usage
-
-1. Enter your canister's initial weight (from manufacturer)
-2. Enter the empty canister weight (from manufacturer)
-3. Enter the current weight of your canister
-4. Get instant calculations of remaining fuel and estimated burn time
+4. Open [http://localhost:3000](http://localhost:3000) in your browser.
 
 ## Contributing
 
@@ -49,10 +71,8 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 
 ## License
 
-This project is licensed under the MIT License - see the LICENSE file for details.
+MIT License - See LICENSE file for details.
 
-## Acknowledgments
+## Author
 
-- Thanks to the outdoor community for inspiration
-- Built with React and TypeScript
-- Powered by Vite 
+Made by [Ashraf Ali](https://ashrafali.net) 
