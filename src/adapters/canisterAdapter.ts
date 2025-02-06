@@ -101,4 +101,58 @@ const staticCanisterData: CanisterDataMap = {
 export const getCanisterData = async (): Promise<CanisterDataMap> => {
   // Simulate asynchronous data fetching.
   return Promise.resolve(staticCanisterData);
+};
+
+// Barcode mapping: scanned barcode value to canister ID.
+const barcodeMapping: Record<string, string> = {
+  // MSR
+  "012345678901": "MSR-110",
+  "012345678902": "MSR-227",
+  "012345678903": "MSR-450",
+  // JetBoil
+  "112345678901": "JetBoil-100",
+  "112345678902": "JetBoil-230",
+  "112345678903": "JetBoil-450",
+  // Giga Power
+  "212345678901": "GigaPower-110",
+  "212345678902": "GigaPower-220",
+  // GSI
+  "312345678901": "GSI-110",
+  "312345678902": "GSI-230",
+  "312345678903": "GSI-450",
+  // Optimus
+  "412345678901": "Optimus-110",
+  "412345678902": "Optimus-230",
+  // Coleman
+  "512345678901": "Coleman-240",
+  "512345678902": "Coleman-440",
+  "512345678903": "ColemanXTREME-240",
+  "512345678904": "ColemanXTREME-440",
+  // Primus
+  "612345678901": "PrimusPower-100",
+  "612345678902": "PrimusPower-230",
+  "612345678903": "PrimusPower-450",
+  "612345678904": "PrimusSummer-100",
+  "612345678905": "PrimusSummer-230",
+  "612345678906": "PrimusSummer-450",
+  "612345678907": "PrimusCold-230",
+  "612345678908": "PrimusCold-450",
+  // Perune
+  "712345678901": "Perune-100",
+  "712345678902": "Perune-230"
+};
+
+/**
+ * Retrieve canister data using a scanned barcode.
+ *
+ * @param barcode - The scanned barcode string.
+ * @returns The matching CanisterData if found; otherwise, null.
+ */
+export const getCanisterByBarcode = async (barcode: string): Promise<CanisterData | null> => {
+  const canisterDataMap = await getCanisterData();
+  const canisterId = barcodeMapping[barcode];
+  if (canisterId && canisterDataMap[canisterId]) {
+    return canisterDataMap[canisterId];
+  }
+  return null;
 }; 

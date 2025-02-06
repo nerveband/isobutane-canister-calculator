@@ -1,6 +1,6 @@
 import React from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
-import { HelpCircle, ListChecks, Database, Mail, Shield, Fuel } from 'lucide-react';
+import { HelpCircle, ListChecks, Database, Mail, Shield, Fuel, Github } from 'lucide-react';
 
 export const About: React.FC = () => {
   return (
@@ -91,7 +91,29 @@ export const About: React.FC = () => {
             This calculator works entirely in your browser. No data is collected or stored on any servers.
           </p>
         </section>
+
+        <section className="space-y-3">
+          <h2 className="text-base sm:text-lg font-semibold flex items-center space-x-2">
+            <Github className="w-5 h-5 text-orange-500 shrink-0" />
+            <span>Open Source</span>
+          </h2>
+          <p className="text-sm sm:text-base text-gray-600">
+            This project is open source and available on{' '}
+            <a 
+              href="https://github.com/nerveband/isobutane-canister-calculator"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-orange-500 hover:text-orange-600"
+            >
+              GitHub
+            </a>
+            . Licensed under the MIT License - feel free to use, modify, and distribute as needed.
+          </p>
+        </section>
       </CardContent>
+      <div className="text-center p-2 sm:p-4 text-xs sm:text-sm text-gray-500">
+        Made by <a href="https://ashrafali.net" target="_blank" rel="noopener noreferrer" className="text-orange-500 hover:text-orange-600">Ashraf Ali</a>
+      </div>
     </Card>
   );
 }; 

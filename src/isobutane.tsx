@@ -6,10 +6,11 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Switch } from "@/components/ui/switch";
-import { getCanisterData, CanisterDataMap } from '@/adapters/canisterAdapter';
+import { getCanisterData, CanisterDataMap, getCanisterByBarcode } from '@/adapters/canisterAdapter';
 import { TabNavigation } from '@/components/layout/TabNavigation';
 import { About } from '@/components/About';
-import { Flame, Scale, Percent, Info, AlertTriangle, CheckCircle2, Fuel } from 'lucide-react';
+import { Flame, Scale, Percent, Info, AlertTriangle, CheckCircle2, Fuel, Camera, Store, Package } from 'lucide-react';
+import BarcodeScanner from '@/components/ui/BarcodeScanner';
 
 const CANISTER_DATA = {
   "MSR-110": { brand: "MSR", fuelWeight: 110, weights: [101, 129, 156, 184, 211] },
@@ -41,6 +42,11 @@ const CANISTER_DATA = {
   "PrimusCold-450": { brand: "Primus Cold Gas", fuelWeight: 450, weights: [195, 308, 420, 533, 645] }
 };
 
+// Feature flags
+const FEATURES = {
+  BARCODE_SCANNING: false, // Set to false to disable barcode scanning
+};
+
 const IsobutaneCalculator = () => {
   const [currentWeight, setCurrentWeight] = useState('');
   const [selectedBrand, setSelectedBrand] = useState('');
@@ -49,7 +55,8 @@ const IsobutaneCalculator = () => {
   const [canisterDataMap, setCanisterDataMap] = useState<CanisterDataMap | null>(null);
   const [weightError, setWeightError] = useState<string | null>(null);
   const [weightWarning, setWeightWarning] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<'calculator' | 'about'>('calculator');
+  const [activeTab, setActiveTab] = useState<'calculator' | 'barcode' | 'about'>('calculator');
+  const [ocrError, setOcrError] = useState<string | null>(null);
 
   // Add effect to validate weight whenever it changes
   useEffect(() => {
@@ -207,17 +214,94 @@ const IsobutaneCalculator = () => {
     };
   }, [selectedModel, currentWeight, useOunces, canisterDataMap]);
 
+  // Handle OCR result
+  const handleOCRResult = (text: string) => {
+    // Basic extraction of weight value
+    const extracted = text.match(/\d+(\.\d+)?/);
+    if (extracted) {
+      setCurrentWeight(extracted[0]);
+      setOcrError(null);
+    } else {
+      setOcrError("No valid weight detected in the image. Please try again.");
+    }
+  };
+
+  // Handle barcode scanning result
+  const handleBarcodeResult = async (barcode: string) => {
+    try {
+      const canisterData = await getCanisterByBarcode(barcode);
+      if (canisterData) {
+        setSelectedBrand(canisterData.brand);
+        // Find the model ID from brandModels
+        const modelId = Object.entries(canisterDataMap || {})
+          .find(([id, data]) => 
+            data.brand === canisterData.brand && 
+            data.fuelWeight === canisterData.fuelWeight
+          )?.[0];
+        if (modelId) {
+          setSelectedModel(modelId);
+        }
+      } else {
+        setWeightError("Canister not found for this barcode. Please select manually.");
+      }
+    } catch (err) {
+      console.error("Error processing barcode:", err);
+      setWeightError("Failed to process barcode. Please select canister manually.");
+    }
+  };
+
   // Render a loading state while the canister data is fetched.
   if (!canisterDataMap) {
-    return <div>Loading canister data...</div>;
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="w-full max-w-md p-8 space-y-4">
+          <div className="text-center mb-4">
+            <Fuel className="w-8 h-8 text-orange-500 mx-auto animate-bounce" />
+            <h2 className="text-xl font-semibold mt-2 text-white">Loading Canister Data</h2>
+          </div>
+          <div className="h-2 bg-white/20 rounded-full overflow-hidden">
+            <div 
+              className="h-full bg-orange-500 rounded-full transition-all duration-1000"
+              style={{ width: '90%' }}
+            />
+          </div>
+        </div>
+      </div>
+    );
   }
 
   return (
-    <div className="w-full max-w-7xl mx-auto px-1 sm:px-6 lg:px-8 py-1 sm:py-8">
-      <TabNavigation activeTab={activeTab} onTabChange={setActiveTab} />
+    <div className="w-full">
+      <TabNavigation activeTab={activeTab} onTabChange={setActiveTab} showBarcodeTab={FEATURES.BARCODE_SCANNING} />
       
       {activeTab === 'about' ? (
         <About />
+      ) : activeTab === 'barcode' && FEATURES.BARCODE_SCANNING ? (
+        <Card className="w-full max-w-4xl mx-auto glass-effect float-animation">
+          <CardHeader className="p-2 sm:p-6">
+            <div className="flex items-center space-x-3">
+              <Camera className="w-6 h-6 text-orange-500" />
+              <CardTitle className="text-xl font-bold">Barcode Scanner & Weight Input</CardTitle>
+            </div>
+          </CardHeader>
+          <CardContent className="p-2 sm:p-6">
+            <div className="space-y-4">
+              <p className="text-sm text-muted-foreground">
+                Scan your canister's barcode to automatically select the correct brand and model, or use the camera/image upload to read the weight from your scale.
+              </p>
+              <BarcodeScanner 
+                onBarcodeDetected={handleBarcodeResult}
+                onOCRResult={handleOCRResult}
+              />
+              {ocrError && (
+                <Alert variant="destructive">
+                  <AlertTriangle className="h-4 w-4" />
+                  <AlertDescription>{ocrError}</AlertDescription>
+                </Alert>
+              )}
+            </div>
+          </CardContent>
+        </Card>
       ) : (
         <Card className="w-full max-w-4xl mx-auto">
           <CardHeader className="p-2 sm:p-6">
@@ -240,155 +324,136 @@ const IsobutaneCalculator = () => {
           </CardHeader>
           <CardContent className="p-2 sm:p-6">
             <div className="space-y-3 sm:space-y-6">
-              <div className="space-y-3 sm:space-y-4">
-                <div>
+              <div className="space-y-3">
+                <Label className="mb-2 block flex items-center space-x-2">
+                  <Store className="w-4 h-4 text-orange-500" />
+                  <span>Select Brand</span>
+                </Label>
+                <div className="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-1.5 sm:gap-2">
+                  {uniqueBrands.map((brand) => (
+                    <button
+                      key={brand}
+                      onClick={() => setSelectedBrand(brand)}
+                      className={`p-2 text-sm rounded-md border transition-colors
+                        ${selectedBrand === brand 
+                          ? 'bg-orange-500 text-white border-orange-500' 
+                          : 'border-orange-200 hover:border-orange-500'
+                        }`}
+                    >
+                      {brand}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {selectedBrand && (
+                <div className="space-y-3">
                   <Label className="mb-2 block flex items-center space-x-2">
-                    <Flame className="w-4 h-4 text-orange-500" />
-                    <span>Brand</span>
+                    <Package className="w-4 h-4 text-orange-500" />
+                    <span>Model</span>
                   </Label>
-                  <div className="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-1.5 sm:gap-2">
-                    {uniqueBrands.map((brand) => (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-1.5 sm:gap-2">
+                    {brandModels[selectedBrand]?.map(({ id, fuelWeight }) => (
                       <button
-                        key={brand}
-                        onClick={() => setSelectedBrand(brand)}
-                        className={`p-2 text-sm rounded-md border transition-colors
-                          ${selectedBrand === brand 
+                        key={id}
+                        onClick={() => setSelectedModel(id)}
+                        className={`p-2 text-sm rounded-md border transition-colors text-left
+                          ${selectedModel === id 
                             ? 'bg-orange-500 text-white border-orange-500' 
                             : 'border-orange-200 hover:border-orange-500'
                           }`}
                       >
-                        {brand}
+                        {useOunces ? gramsToOz(fuelWeight) : fuelWeight}{useOunces ? 'oz' : 'g'} canister
                       </button>
                     ))}
                   </div>
                 </div>
-
-                {selectedBrand && (
-                  <div>
-                    <Label className="mb-2 block flex items-center space-x-2">
-                      <Fuel className="w-4 h-4 text-orange-500" />
-                      <span>Model</span>
-                    </Label>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-1.5 sm:gap-2">
-                      {brandModels[selectedBrand]?.map(({ id, fuelWeight }) => (
-                        <button
-                          key={id}
-                          onClick={() => setSelectedModel(id)}
-                          className={`p-2 text-sm rounded-md border transition-colors text-left
-                            ${selectedModel === id 
-                              ? 'bg-orange-500 text-white border-orange-500' 
-                              : 'border-orange-200 hover:border-orange-500'
-                            }`}
-                        >
-                          {useOunces ? gramsToOz(fuelWeight) : fuelWeight}{useOunces ? 'oz' : 'g'} canister
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
+              )}
 
               {selectedModel && (
-                <>
-                  <div className="space-y-2">
-                    <Label htmlFor="weight" className="flex items-center space-x-2">
-                      <Scale className="w-4 h-4 text-orange-500" />
-                      <span>Current Weight ({useOunces ? 'oz' : 'g'})</span>
-                    </Label>
-                    <Input
-                      id="weight"
-                      type="number"
-                      inputMode="decimal"
-                      step={useOunces ? "0.01" : "1"}
-                      placeholder={`Enter weight in ${useOunces ? 'ounces' : 'grams'}`}
-                      value={currentWeight}
-                      onChange={(e) => setCurrentWeight(e.target.value)}
-                      className={`w-full border-2 transition-colors ${
-                        weightError ? 'border-red-500 focus:ring-red-500 bg-red-50' :
-                        weightWarning ? 'border-yellow-500 focus:ring-yellow-500 bg-yellow-50' :
-                        'border-orange-200 focus:ring-orange-500'
-                      }`}
-                    />
-                    <p className="text-xs sm:text-sm text-gray-500 mt-1">
-                      Valid range: {useOunces 
-                        ? `${gramsToOz(canisterDataMap[selectedModel].weights[0])}oz - ${gramsToOz(canisterDataMap[selectedModel].weights[4])}oz`
-                        : `${canisterDataMap[selectedModel].weights[0]}g - ${canisterDataMap[selectedModel].weights[4]}g`}
+                <div className="space-y-3">
+                  <Label className="mb-2 block flex items-center space-x-2">
+                    <Scale className="w-4 h-4 text-orange-500" />
+                    <span>Current Weight ({useOunces ? 'oz' : 'g'})</span>
+                  </Label>
+                  <Input
+                    type="number"
+                    step="0.1"
+                    value={currentWeight}
+                    onChange={(e) => setCurrentWeight(e.target.value)}
+                    placeholder={`Enter weight in ${useOunces ? 'ounces' : 'grams'}`}
+                    className="w-full"
+                  />
+                </div>
+              )}
+
+              {weightError && (
+                <Alert className="border-red-500 bg-red-50 text-red-800 text-sm">
+                  <AlertTriangle className="w-4 h-4 shrink-0" />
+                  <AlertDescription>{weightError}</AlertDescription>
+                </Alert>
+              )}
+
+              {weightWarning && !weightError && (
+                <Alert className="border-yellow-500 bg-yellow-50 text-yellow-800 text-sm">
+                  <AlertTriangle className="w-4 h-4 shrink-0" />
+                  <AlertDescription>{weightWarning}</AlertDescription>
+                </Alert>
+              )}
+
+              {result && (
+                <div className="space-y-4">
+                  <div className="bg-orange-50 p-3 sm:p-4 rounded-lg">
+                    <h3 className="font-semibold mb-2 flex items-center space-x-2 text-sm sm:text-base">
+                      <Info className="w-4 h-4 text-orange-500 shrink-0" />
+                      <span>Canister Details</span>
+                    </h3>
+                    <p className="text-sm font-medium text-gray-900 mb-2">
+                      {canisterDataMap[selectedModel].brand} - {useOunces ? gramsToOz(canisterDataMap[selectedModel].fuelWeight) : canisterDataMap[selectedModel].fuelWeight}{useOunces ? 'oz' : 'g'} canister
                     </p>
+                    <div className="space-y-1 text-xs sm:text-sm">
+                      <p className="text-gray-600">
+                        Empty Weight: {result.emptyWeight}{useOunces ? 'oz' : 'g'}
+                      </p>
+                      <p className="text-gray-600">
+                        Total Fuel When Full: {result.totalFuel}{useOunces ? 'oz' : 'g'}
+                      </p>
+                      <p className="text-gray-600">
+                        Total Weight When Full: {result.fullWeight}{useOunces ? 'oz' : 'g'}
+                      </p>
+                    </div>
                   </div>
 
-                  {weightError && (
-                    <Alert className="border-red-500 bg-red-50 text-red-800 text-sm">
-                      <AlertTriangle className="w-4 h-4 shrink-0" />
-                      <AlertDescription>{weightError}</AlertDescription>
-                    </Alert>
-                  )}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="text-center sm:text-left">
+                      <h3 className="font-semibold mb-1 flex items-center space-x-2 text-sm sm:text-base justify-center sm:justify-start">
+                        <Fuel className="w-4 h-4 text-orange-500 shrink-0" />
+                        <span>Remaining Fuel</span>
+                      </h3>
+                      <p className="text-xl sm:text-2xl font-bold text-orange-500">
+                        {result.remainingFuel}{useOunces ? 'oz' : 'g'}
+                      </p>
+                    </div>
 
-                  {weightWarning && !weightError && (
-                    <Alert className="border-yellow-500 bg-yellow-50 text-yellow-800 text-sm">
-                      <AlertTriangle className="w-4 h-4 shrink-0" />
-                      <AlertDescription>{weightWarning}</AlertDescription>
-                    </Alert>
-                  )}
-
-                  {result && (
-                    <div className="space-y-4">
-                      <div className="bg-orange-50 p-3 sm:p-4 rounded-lg">
-                        <h3 className="font-semibold mb-2 flex items-center space-x-2 text-sm sm:text-base">
-                          <Info className="w-4 h-4 text-orange-500 shrink-0" />
-                          <span>Canister Details</span>
-                        </h3>
-                        <p className="text-sm font-medium text-gray-900 mb-2">
-                          {canisterDataMap[selectedModel].brand} - {useOunces ? gramsToOz(canisterDataMap[selectedModel].fuelWeight) : canisterDataMap[selectedModel].fuelWeight}{useOunces ? 'oz' : 'g'} canister
-                        </p>
-                        <div className="space-y-1 text-xs sm:text-sm">
-                          <p className="text-gray-600">
-                            Empty Weight: {result.emptyWeight}{useOunces ? 'oz' : 'g'}
-                          </p>
-                          <p className="text-gray-600">
-                            Total Fuel When Full: {result.totalFuel}{useOunces ? 'oz' : 'g'}
-                          </p>
-                          <p className="text-gray-600">
-                            Total Weight When Full: {result.fullWeight}{useOunces ? 'oz' : 'g'}
-                          </p>
-                        </div>
-                      </div>
-
-                      <div className="space-y-3">
-                        <div>
-                          <h3 className="font-semibold mb-1 flex items-center space-x-2 text-sm sm:text-base">
-                            <Fuel className="w-4 h-4 text-orange-500 shrink-0" />
-                            <span>Remaining Fuel</span>
-                          </h3>
-                          <p className="text-xl sm:text-2xl font-bold text-orange-500">
-                            {result.remainingFuel}{useOunces ? 'oz' : 'g'}
-                          </p>
-                        </div>
-
-                        <div>
-                          <h3 className="font-semibold mb-1 flex items-center space-x-2 text-sm sm:text-base">
-                            <Percent className="w-4 h-4 text-orange-500 shrink-0" />
-                            <span>Fuel Percentage</span>
-                          </h3>
-                          <div className="relative pt-1">
-                            <div className="flex mb-2 items-center justify-between">
-                              <div>
-                                <span className="text-xl sm:text-2xl font-bold text-orange-500">
-                                  {result.percentage}%
-                                </span>
-                              </div>
-                            </div>
-                            <div className="overflow-hidden h-2 mb-4 text-xs flex rounded bg-orange-100">
-                              <div 
-                                style={{ width: `${result.percentage}%` }}
-                                className="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-orange-500"
-                              />
-                            </div>
-                          </div>
+                    <div className="text-center sm:text-left">
+                      <h3 className="font-semibold mb-1 flex items-center space-x-2 text-sm sm:text-base justify-center sm:justify-start">
+                        <Percent className="w-4 h-4 text-orange-500 shrink-0" />
+                        <span>Fuel Percentage</span>
+                      </h3>
+                      <div className="flex flex-col items-center sm:items-start">
+                        <span className="text-xl sm:text-2xl font-bold text-orange-500 mb-2">
+                          {result.percentage}%
+                        </span>
+                        <div className="h-2 rounded bg-orange-100 w-full">
+                          <div 
+                            style={{ width: `${result.percentage}%` }}
+                            className="h-full rounded bg-orange-500 transition-all duration-500 ease-out"
+                          />
                         </div>
                       </div>
                     </div>
-                  )}
-                </>
+                  </div>
+                </div>
               )}
             </div>
           </CardContent>

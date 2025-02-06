@@ -1,39 +1,56 @@
 'use client';
 
-import React from 'react';
-import { Card } from '@/components/ui/card';
-import { Calculator, Info } from 'lucide-react';
+import * as React from "react";
 
 interface TabNavigationProps {
-  activeTab: 'calculator' | 'about';
-  onTabChange: (tab: 'calculator' | 'about') => void;
+  activeTab: 'calculator' | 'barcode' | 'about';
+  onTabChange: (tab: 'calculator' | 'barcode' | 'about') => void;
+  showBarcodeTab?: boolean;
 }
 
-export const TabNavigation: React.FC<TabNavigationProps> = ({ activeTab, onTabChange }) => {
+export const TabNavigation: React.FC<TabNavigationProps> = ({ 
+  activeTab, 
+  onTabChange,
+  showBarcodeTab = false
+}) => {
   return (
-    <div className="flex border-b border-gray-200 mb-6">
-      <button
-        onClick={() => onTabChange('calculator')}
-        className={`px-6 py-3 text-sm font-medium transition-colors relative flex items-center space-x-2 ${
-          activeTab === 'calculator'
-            ? 'text-orange-500 border-b-2 border-orange-500 -mb-px'
-            : 'text-gray-500 hover:text-orange-500'
-        }`}
-      >
-        <Calculator className="w-4 h-4" />
-        <span>Calculator</span>
-      </button>
-      <button
-        onClick={() => onTabChange('about')}
-        className={`px-6 py-3 text-sm font-medium transition-colors relative flex items-center space-x-2 ${
-          activeTab === 'about'
-            ? 'text-orange-500 border-b-2 border-orange-500 -mb-px'
-            : 'text-gray-500 hover:text-orange-500'
-        }`}
-      >
-        <Info className="w-4 h-4" />
-        <span>About</span>
-      </button>
+    <div className="flex justify-center mb-4">
+      <nav className="flex space-x-1 rounded-lg bg-muted p-1">
+        <button
+          onClick={() => onTabChange('calculator')}
+          className={`flex items-center justify-center rounded-md px-3 py-1.5 text-sm font-medium transition-all
+            ${activeTab === 'calculator' 
+              ? 'bg-background text-foreground shadow-sm' 
+              : 'text-muted-foreground hover:bg-background/50 hover:text-foreground'
+            }`}
+        >
+          Calculator
+        </button>
+
+        {showBarcodeTab && (
+          <button
+            onClick={() => onTabChange('barcode')}
+            className={`flex items-center justify-center rounded-md px-3 py-1.5 text-sm font-medium transition-all
+              ${activeTab === 'barcode' 
+                ? 'bg-background text-foreground shadow-sm' 
+                : 'text-muted-foreground hover:bg-background/50 hover:text-foreground'
+              }`}
+          >
+            Weight Input
+          </button>
+        )}
+
+        <button
+          onClick={() => onTabChange('about')}
+          className={`flex items-center justify-center rounded-md px-3 py-1.5 text-sm font-medium transition-all
+            ${activeTab === 'about' 
+              ? 'bg-background text-foreground shadow-sm' 
+              : 'text-muted-foreground hover:bg-background/50 hover:text-foreground'
+            }`}
+        >
+          About
+        </button>
+      </nav>
     </div>
   );
 }; 

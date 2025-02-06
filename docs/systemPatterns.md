@@ -1,33 +1,132 @@
-# System Patterns and Architecture
+# System Architecture and Patterns
 
-## Architecture Overview
-The application will follow a simple, modular architecture:
+## Component Architecture
 
-```
-isobutane-canister-calculator/
-├── src/                    # Source code
-│   ├── calculator/         # Core calculation logic
-│   ├── ui/                 # User interface components
-│   └── utils/             # Utility functions
-├── tests/                  # Test files
-└── docs/                   # Documentation
-```
+### Core Components
+- `IsobutaneCalculator`: Main application component
+- `TabNavigation`: Handles navigation between calculator and about sections
+- `About`: Information about the application
 
-## Key Technical Decisions
-1. Web-based implementation for maximum accessibility
-2. Client-side calculations for privacy and offline use
-3. Responsive design for mobile and desktop use
-4. Unit testing for calculation accuracy
+### Data Layer
+- `canisterAdapter.ts`: Data access layer for canister information
+  - Static data for canister specifications
+  - Barcode mapping for canister identification
+  - Async data fetching simulation for future API integration
 
-## Design Patterns
-- Module Pattern for code organization
-- Factory Pattern for creating calculation instances
-- Observer Pattern for UI updates
-- Strategy Pattern for different calculation methods
+### OCR Integration
+- `OCRTabs`: Container component for OCR functionality
+  - Manages tab state between camera and upload options
+  - Handles OCR result processing
+- `CameraComponent`: Camera access and image capture
+  - Uses `navigator.mediaDevices` for camera access
+  - Canvas-based image capture
+  - Tesseract.js integration for OCR
+- `ImageDropzone`: Drag & drop file upload
+  - Uses react-dropzone for file handling
+  - Image preprocessing for OCR
+  - Error handling for invalid files
 
-## Code Style
-- ES6+ JavaScript standards
-- Clear function and variable naming
-- Comprehensive error handling
-- Detailed code comments
-- TypeScript for type safety 
+### Barcode Scanning
+- `BarcodeScanner`: ZXing integration for barcode reading
+  - Camera stream management
+  - Real-time barcode detection
+  - Error handling for camera access
+  - Automatic canister identification
+
+## Data Flow
+
+### Weight Input Flow
+1. Manual Input:
+   - Direct numeric input
+   - Unit conversion (g/oz)
+   - Validation against canister specs
+
+2. OCR Input:
+   - Image capture/upload
+   - Tesseract.js processing
+   - Text extraction and parsing
+   - Weight validation
+   - Unit conversion if needed
+
+3. Barcode Flow:
+   - Camera stream initialization
+   - ZXing barcode detection
+   - Lookup in barcode mapping
+   - Canister data retrieval
+   - Auto-selection of brand/model
+
+## State Management
+
+### Component State
+- Current weight
+- Selected brand/model
+- Unit preference (g/oz)
+- OCR processing state
+- Barcode scanning state
+- Error/warning messages
+
+### Data Persistence
+- In-memory canister data
+- Barcode mapping
+- Future: Local storage for preferences
+
+## Error Handling
+
+### Camera Access
+- Permission checks
+- Fallback to manual input
+- Clear error messages
+- Automatic retry options
+
+### OCR Processing
+- Image validation
+- Text extraction validation
+- Numeric parsing
+- Range validation
+- User feedback
+
+### Barcode Scanning
+- Camera stream errors
+- Unrecognized barcodes
+- Invalid data handling
+- Graceful fallbacks
+
+## UI/UX Patterns
+
+### Input Methods
+- Manual numeric input
+- Camera capture
+- Image upload
+- Barcode scanning
+
+### Feedback
+- Loading states
+- Success indicators
+- Error messages
+- Warning alerts
+- Progress indicators
+
+### Accessibility
+- ARIA labels
+- Keyboard navigation
+- Screen reader support
+- High contrast support
+
+## Future Considerations
+
+### Performance
+- Image optimization
+- OCR worker threads
+- Caching strategies
+- Lazy loading
+
+### Offline Support
+- Service worker
+- IndexedDB storage
+- Offline-first architecture
+
+### Extensibility
+- Plugin architecture for new features
+- API integration points
+- Custom OCR processors
+- Additional barcode formats 
