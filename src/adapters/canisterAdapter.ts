@@ -36,7 +36,7 @@ const genericData = {
 const staticCanisterData: CanisterDataMap = {
   // Generic/Unknown brand first with averaged data
   "Generic-100": { 
-    brand: "Generic/Unknown", 
+    brand: "Generic", 
     fuelWeight: 100, 
     weights: [
       genericData["100"].empty,
@@ -47,7 +47,7 @@ const staticCanisterData: CanisterDataMap = {
     ]
   },
   "Generic-230": { 
-    brand: "Generic/Unknown", 
+    brand: "Generic", 
     fuelWeight: 230, 
     weights: [
       genericData["230"].empty,
@@ -58,7 +58,7 @@ const staticCanisterData: CanisterDataMap = {
     ]
   },
   "Generic-450": { 
-    brand: "Generic/Unknown", 
+    brand: "Generic", 
     fuelWeight: 450, 
     weights: [
       genericData["450"].empty,

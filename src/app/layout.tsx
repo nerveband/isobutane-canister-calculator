@@ -51,7 +51,7 @@ export default function RootLayout({
       </head>
       <body className="bg-gradient">
         <div className="relative z-10 min-h-screen flex flex-col">
-          <div className="flex-1 container mx-auto p-4">
+          <div className="flex-1 container mx-auto p-4 flex justify-center items-start">
             {children}
           </div>
         </div>

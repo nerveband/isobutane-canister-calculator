@@ -84,6 +84,16 @@ const IsobutaneCalculator = () => {
     });
   }, []);
 
+  // Add effect to focus input when model is selected
+  useEffect(() => {
+    if (selectedModel) {
+      const inputElement = document.querySelector('input[type="number"]') as HTMLInputElement;
+      if (inputElement) {
+        inputElement.focus();
+      }
+    }
+  }, [selectedModel]);
+
   const brandModels = useMemo(() => {
     if (!canisterDataMap) return {};
     
@@ -304,13 +314,13 @@ const IsobutaneCalculator = () => {
         </Card>
       ) : (
         <Card className="w-full max-w-4xl mx-auto">
-          <CardHeader className="p-2 sm:p-6">
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center space-y-2 sm:space-y-0">
+          <CardHeader className="p-6 sm:p-6">
+            <div className="flex flex-col sm:flex-row justify-between items-center space-y-2 sm:space-y-0">
               <div className="flex items-center space-x-3">
                 <Fuel className="w-6 h-6 text-orange-500" />
                 <CardTitle className="text-xl font-bold">Isobutane Calculator</CardTitle>
               </div>
-              <div className="flex items-center space-x-2">
+              <div className="flex items-center space-x-2 justify-center w-full sm:w-auto">
                 <Label htmlFor="unit-toggle" className="text-sm">g</Label>
                 <Switch
                   id="unit-toggle"
@@ -322,19 +332,19 @@ const IsobutaneCalculator = () => {
               </div>
             </div>
           </CardHeader>
-          <CardContent className="p-2 sm:p-6">
-            <div className="space-y-3 sm:space-y-6">
-              <div className="space-y-3">
-                <Label className="mb-2 block flex items-center space-x-2">
+          <CardContent className="p-4 sm:p-6">
+            <div className="space-y-6 sm:space-y-10">
+              <div className="space-y-4">
+                <Label className="mb-3 block flex items-center space-x-2">
                   <Store className="w-4 h-4 text-orange-500" />
                   <span>Select Brand</span>
                 </Label>
-                <div className="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-1.5 sm:gap-2">
+                <div className="grid grid-cols-3 sm:grid-cols-3 lg:grid-cols-4 gap-1.5 sm:gap-2">
                   {uniqueBrands.map((brand) => (
                     <button
                       key={brand}
                       onClick={() => setSelectedBrand(brand)}
-                      className={`p-2 text-sm rounded-md border transition-colors
+                      className={`p-2 text-sm rounded-md border transition-colors text-center
                         ${selectedBrand === brand 
                           ? 'bg-orange-500 text-white border-orange-500' 
                           : 'border-orange-200 hover:border-orange-500'
@@ -347,17 +357,17 @@ const IsobutaneCalculator = () => {
               </div>
 
               {selectedBrand && (
-                <div className="space-y-3">
-                  <Label className="mb-2 block flex items-center space-x-2">
+                <div className="space-y-4">
+                  <Label className="mb-3 block flex items-center space-x-2">
                     <Package className="w-4 h-4 text-orange-500" />
                     <span>Model</span>
                   </Label>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-1.5 sm:gap-2">
+                  <div className="grid grid-cols-3 sm:grid-cols-2 lg:grid-cols-3 gap-1.5 sm:gap-2">
                     {brandModels[selectedBrand]?.map(({ id, fuelWeight }) => (
                       <button
                         key={id}
                         onClick={() => setSelectedModel(id)}
-                        className={`p-2 text-sm rounded-md border transition-colors text-left
+                        className={`p-2 text-sm rounded-md border transition-colors text-center
                           ${selectedModel === id 
                             ? 'bg-orange-500 text-white border-orange-500' 
                             : 'border-orange-200 hover:border-orange-500'
@@ -371,47 +381,60 @@ const IsobutaneCalculator = () => {
               )}
 
               {selectedModel && (
-                <div className="space-y-3">
-                  <Label className="mb-2 block flex items-center space-x-2">
+                <div className="space-y-4">
+                  <Label className="mb-3 block flex items-center space-x-2">
                     <Scale className="w-4 h-4 text-orange-500" />
-                    <span>Current Weight ({useOunces ? 'oz' : 'g'})</span>
+                    <span className="text-lg">Current Weight ({useOunces ? 'oz' : 'g'})</span>
                   </Label>
-                  <Input
-                    type="number"
-                    step="0.1"
-                    value={currentWeight}
-                    onChange={(e) => setCurrentWeight(e.target.value)}
-                    placeholder={`Enter weight in ${useOunces ? 'ounces' : 'grams'}`}
-                    className="w-full"
-                  />
+                  <div className="relative">
+                    <Input
+                      type="number"
+                      step="0.1"
+                      value={currentWeight}
+                      onChange={(e) => setCurrentWeight(e.target.value)}
+                      placeholder={`Enter weight in ${useOunces ? 'ounces' : 'grams'}`}
+                      className="w-full h-16 text-2xl px-4 pr-12 text-center font-medium tracking-wide rounded-xl
+                        bg-white shadow-sm border-2 border-orange-100
+                        focus:border-orange-500 focus:ring-orange-200 focus:ring-2 focus:ring-offset-2
+                        transition-all duration-200 ease-out
+                        placeholder:text-gray-400 placeholder:text-lg"
+                    />
+                    <div className="absolute right-4 top-1/2 -translate-y-1/2 text-2xl font-medium text-gray-500">
+                      {useOunces ? 'oz' : 'g'}
+                    </div>
+                  </div>
                 </div>
               )}
 
-              {weightError && (
-                <Alert className="border-red-500 bg-red-50 text-red-800 text-sm">
-                  <AlertTriangle className="w-4 h-4 shrink-0" />
-                  <AlertDescription>{weightError}</AlertDescription>
-                </Alert>
-              )}
+              {(weightError || weightWarning) && (
+                <div className="space-y-3">
+                  {weightError && (
+                    <Alert className="border-red-500 bg-red-50/90 text-red-800 text-sm backdrop-blur-sm">
+                      <AlertTriangle className="w-4 h-4 shrink-0" />
+                      <AlertDescription>{weightError}</AlertDescription>
+                    </Alert>
+                  )}
 
-              {weightWarning && !weightError && (
-                <Alert className="border-yellow-500 bg-yellow-50 text-yellow-800 text-sm">
-                  <AlertTriangle className="w-4 h-4 shrink-0" />
-                  <AlertDescription>{weightWarning}</AlertDescription>
-                </Alert>
+                  {weightWarning && !weightError && (
+                    <Alert className="border-yellow-500 bg-yellow-50/90 text-yellow-800 text-sm backdrop-blur-sm">
+                      <AlertTriangle className="w-4 h-4 shrink-0" />
+                      <AlertDescription>{weightWarning}</AlertDescription>
+                    </Alert>
+                  )}
+                </div>
               )}
 
               {result && (
-                <div className="space-y-4">
-                  <div className="bg-orange-50 p-3 sm:p-4 rounded-lg">
-                    <h3 className="font-semibold mb-2 flex items-center space-x-2 text-sm sm:text-base">
+                <div className="space-y-6">
+                  <div className="bg-orange-50 p-4 sm:p-6 rounded-xl shadow-sm">
+                    <h3 className="font-semibold mb-4 flex items-center space-x-2 text-sm sm:text-base">
                       <Info className="w-4 h-4 text-orange-500 shrink-0" />
                       <span>Canister Details</span>
                     </h3>
-                    <p className="text-sm font-medium text-gray-900 mb-2">
+                    <p className="text-sm font-medium text-gray-900 mb-3">
                       {canisterDataMap[selectedModel].brand} - {useOunces ? gramsToOz(canisterDataMap[selectedModel].fuelWeight) : canisterDataMap[selectedModel].fuelWeight}{useOunces ? 'oz' : 'g'} canister
                     </p>
-                    <div className="space-y-1 text-xs sm:text-sm">
+                    <div className="space-y-2 text-xs sm:text-sm">
                       <p className="text-gray-600">
                         Empty Weight: {result.emptyWeight}{useOunces ? 'oz' : 'g'}
                       </p>
@@ -457,7 +480,7 @@ const IsobutaneCalculator = () => {
               )}
             </div>
           </CardContent>
-          <div className="text-center p-2 sm:p-4 text-xs sm:text-sm text-gray-500">
+          <div className="text-center p-2 pb-6 sm:p-4 text-xs sm:text-sm text-gray-500">
             Made by <a href="https://ashrafali.net" target="_blank" rel="noopener noreferrer" className="text-orange-500 hover:text-orange-600">Ashraf Ali</a>
           </div>
         </Card>
