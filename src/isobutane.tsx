@@ -396,10 +396,18 @@ const IsobutaneCalculator = () => {
                   </Label>
                   <div className="relative">
                     <Input
-                      type="number"
+                      type="text"
+                      inputMode="decimal"
+                      pattern="[0-9]*[.]?[0-9]*"
                       step="0.1"
                       value={currentWeight}
-                      onChange={(e) => setCurrentWeight(e.target.value)}
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        // Allow only numbers and decimal point
+                        if (value === '' || /^\d*\.?\d*$/.test(value)) {
+                          setCurrentWeight(value);
+                        }
+                      }}
                       placeholder={`Enter weight in ${useOunces ? 'ounces' : 'grams'}`}
                       className="w-full h-16 text-2xl px-4 pr-12 text-center font-medium tracking-wide rounded-xl
                         bg-white shadow-sm border-2 border-orange-100
