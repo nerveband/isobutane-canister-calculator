@@ -1,6 +1,6 @@
 import React from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
-import { HelpCircle, ListChecks, Database, Mail, Shield, Fuel, Github } from 'lucide-react';
+import { HelpCircle, ListChecks, Database, Mail, Shield, Fuel, Github, Info } from 'lucide-react';
 
 export const About: React.FC = () => {
   return (
@@ -30,11 +30,24 @@ export const About: React.FC = () => {
           <ol className="list-decimal list-inside space-y-2 text-sm sm:text-base text-gray-600">
             <li>Select your canister brand from the available options</li>
             <li>Choose your specific canister model</li>
+            <li>If using a FlipFuel adapter, toggle the FlipFuel switch</li>
             <li>Enter the current weight of your canister (in grams or ounces)</li>
             <li>View the remaining fuel amount and percentage</li>
           </ol>
           <p className="text-sm sm:text-base text-gray-600">
             The calculator will automatically validate your input and warn you if the weight is outside the expected range for your canister.
+          </p>
+        </section>
+
+        <section className="space-y-3">
+          <h2 className="text-base sm:text-lg font-semibold flex items-center space-x-2">
+            <Info className="w-5 h-5 text-orange-500 shrink-0" />
+            <span>FlipFuel Support</span>
+          </h2>
+          <p className="text-sm sm:text-base text-gray-600">
+            The calculator includes support for the FlipFuel adapter - a device that allows you to transfer fuel between canisters. 
+            When using a FlipFuel (which weighs 37g), toggle the FlipFuel switch and the calculator will automatically subtract 
+            its weight from your measurements to ensure accurate fuel level readings.
           </p>
         </section>
 

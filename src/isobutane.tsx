@@ -57,6 +57,7 @@ const IsobutaneCalculator = () => {
   const [weightWarning, setWeightWarning] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'calculator' | 'barcode' | 'about'>('calculator');
   const [ocrError, setOcrError] = useState<string | null>(null);
+  const [hasFlipFuel, setHasFlipFuel] = useState(false);
 
   // Add effect to validate weight whenever it changes
   useEffect(() => {
@@ -70,7 +71,7 @@ const IsobutaneCalculator = () => {
     const validation = validateWeight(currentWeight, canisterData);
     setWeightError(validation.error || null);
     setWeightWarning(validation.warning || null);
-  }, [currentWeight, selectedModel, canisterDataMap, useOunces]);
+  }, [currentWeight, selectedModel, canisterDataMap, useOunces, hasFlipFuel]);
 
   // Remove the reset of errors in this effect since we handle it in the validation effect
   useEffect(() => {
@@ -125,6 +126,7 @@ const IsobutaneCalculator = () => {
     }
 
     const weightInGrams = useOunces ? parseFloat(ozToGrams(parseFloat(weight))) : parseFloat(weight);
+    const adjustedWeight = hasFlipFuel ? weightInGrams - 37 : weightInGrams;
     
     if (isNaN(weightInGrams)) {
       return { isValid: false, error: "Please enter a valid number" };
@@ -134,32 +136,32 @@ const IsobutaneCalculator = () => {
     const maxWeight = canisterData.weights[canisterData.weights.length - 1];
 
     // Check for physically impossible weights (significantly outside valid range)
-    if (weightInGrams < minWeight * 0.9) { // More than 10% below empty weight
+    if (adjustedWeight < minWeight * 0.9) { // More than 10% below empty weight
       return { 
         isValid: false, 
-        error: `Weight too low: ${useOunces ? gramsToOz(weightInGrams) : weightInGrams}${useOunces ? 'oz' : 'g'} is below minimum empty weight (${useOunces ? gramsToOz(minWeight) : minWeight}${useOunces ? 'oz' : 'g'})`
+        error: `Weight too low: ${useOunces ? gramsToOz(adjustedWeight) : adjustedWeight}${useOunces ? 'oz' : 'g'} is below minimum empty weight (${useOunces ? gramsToOz(minWeight) : minWeight}${useOunces ? 'oz' : 'g'})`
       };
     }
 
-    if (weightInGrams > maxWeight * 1.1) { // More than 10% above full weight
+    if (adjustedWeight > maxWeight * 1.1) { // More than 10% above full weight
       return { 
         isValid: false, 
-        error: `Weight too high: ${useOunces ? gramsToOz(weightInGrams) : weightInGrams}${useOunces ? 'oz' : 'g'} is above maximum full weight (${useOunces ? gramsToOz(maxWeight) : maxWeight}${useOunces ? 'oz' : 'g'})`
+        error: `Weight too high: ${useOunces ? gramsToOz(adjustedWeight) : adjustedWeight}${useOunces ? 'oz' : 'g'} is above maximum full weight (${useOunces ? gramsToOz(maxWeight) : maxWeight}${useOunces ? 'oz' : 'g'})`
       };
     }
 
     // Check for weights slightly outside normal range (might be measurement error)
-    if (weightInGrams < minWeight) {
+    if (adjustedWeight < minWeight) {
       return { 
         isValid: true, 
-        warning: `Weight ${useOunces ? gramsToOz(weightInGrams) : weightInGrams}${useOunces ? 'oz' : 'g'} is slightly below empty weight (${useOunces ? gramsToOz(minWeight) : minWeight}${useOunces ? 'oz' : 'g'}). Please verify your measurement.`
+        warning: `Weight ${useOunces ? gramsToOz(adjustedWeight) : adjustedWeight}${useOunces ? 'oz' : 'g'} is slightly below empty weight (${useOunces ? gramsToOz(minWeight) : minWeight}${useOunces ? 'oz' : 'g'}). Please verify your measurement.`
       };
     }
 
-    if (weightInGrams > maxWeight) {
+    if (adjustedWeight > maxWeight) {
       return { 
         isValid: true, 
-        warning: `Weight ${useOunces ? gramsToOz(weightInGrams) : weightInGrams}${useOunces ? 'oz' : 'g'} is slightly above full weight (${useOunces ? gramsToOz(maxWeight) : maxWeight}${useOunces ? 'oz' : 'g'}). Please verify your measurement.`
+        warning: `Weight ${useOunces ? gramsToOz(adjustedWeight) : adjustedWeight}${useOunces ? 'oz' : 'g'} is slightly above full weight (${useOunces ? gramsToOz(maxWeight) : maxWeight}${useOunces ? 'oz' : 'g'}). Please verify your measurement.`
       };
     }
 
@@ -172,28 +174,22 @@ const IsobutaneCalculator = () => {
   ) => {
     if (!weight || !canisterData) return null;
     
-    const validation = validateWeight(weight, canisterData);
-    setWeightError(validation.error || null);
-    setWeightWarning(validation.warning || null);
-    
-    if (!validation.isValid) {
-      return null;
-    }
-    
     const weightInGrams = useOunces ? parseFloat(ozToGrams(parseFloat(weight))) : parseFloat(weight);
+    const adjustedWeight = hasFlipFuel ? weightInGrams - 37 : weightInGrams;
+    
+    if (isNaN(adjustedWeight)) return null;
+
     const percentages = [0, 25, 50, 75, 100];
     const weights = canisterData.weights;
 
-    // Handle edge cases with clamping
-    if (weightInGrams <= weights[0]) return 0;
-    if (weightInGrams >= weights[weights.length - 1]) return 100;
+    if (adjustedWeight <= weights[0]) return 0;
+    if (adjustedWeight >= weights[weights.length - 1]) return 100;
 
-    // Find the interval where the weight falls
     for (let i = 0; i < weights.length - 1; i++) {
-      if (weightInGrams >= weights[i] && weightInGrams <= weights[i + 1]) {
+      if (adjustedWeight >= weights[i] && adjustedWeight <= weights[i + 1]) {
         const weightRange = weights[i + 1] - weights[i];
         const percentageRange = percentages[i + 1] - percentages[i];
-        const weightDiff = weightInGrams - weights[i];
+        const weightDiff = adjustedWeight - weights[i];
         return percentages[i] + (weightDiff / weightRange) * percentageRange;
       }
     }
@@ -212,8 +208,9 @@ const IsobutaneCalculator = () => {
 
     const emptyWeight = canData.weights[0];
     const fullWeight = canData.weights[canData.weights.length - 1];
-    const weightInGrams = useOunces ? ozToGrams(parseFloat(currentWeight)) : currentWeight;
-    const remainingFuel = Math.max(0, parseFloat(weightInGrams as string) - emptyWeight);
+    const weightInGrams = useOunces ? parseFloat(ozToGrams(parseFloat(currentWeight))) : parseFloat(currentWeight);
+    const adjustedWeight = hasFlipFuel ? weightInGrams - 37 : weightInGrams;
+    const remainingFuel = Math.max(0, adjustedWeight - emptyWeight);
     
     return {
       percentage: percentage.toFixed(1),
@@ -222,7 +219,7 @@ const IsobutaneCalculator = () => {
       totalFuel: useOunces ? gramsToOz(canData.fuelWeight) : canData.fuelWeight,
       fullWeight: useOunces ? gramsToOz(fullWeight) : fullWeight,
     };
-  }, [selectedModel, currentWeight, useOunces, canisterDataMap]);
+  }, [selectedModel, currentWeight, useOunces, canisterDataMap, hasFlipFuel]);
 
   // Handle OCR result
   const handleOCRResult = (text: string) => {
@@ -320,15 +317,26 @@ const IsobutaneCalculator = () => {
                 <Fuel className="w-6 h-6 text-orange-500" />
                 <CardTitle className="text-xl font-bold">Isobutane Calculator</CardTitle>
               </div>
-              <div className="flex items-center space-x-2 justify-center w-full sm:w-auto">
-                <Label htmlFor="unit-toggle" className="text-sm">g</Label>
-                <Switch
-                  id="unit-toggle"
-                  checked={useOunces}
-                  onCheckedChange={setUseOunces}
-                  className="data-[state=checked]:bg-orange-500"
-                />
-                <Label htmlFor="unit-toggle" className="text-sm">oz</Label>
+              <div className="flex items-center space-x-4 justify-center w-full sm:w-auto">
+                <div className="flex items-center space-x-2">
+                  <Label htmlFor="unit-toggle" className="text-sm">g</Label>
+                  <Switch
+                    id="unit-toggle"
+                    checked={useOunces}
+                    onCheckedChange={setUseOunces}
+                    className="data-[state=checked]:bg-orange-500"
+                  />
+                  <Label htmlFor="unit-toggle" className="text-sm">oz</Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Switch
+                    id="flipfuel-toggle"
+                    checked={hasFlipFuel}
+                    onCheckedChange={setHasFlipFuel}
+                    className="data-[state=checked]:bg-orange-500"
+                  />
+                  <Label htmlFor="flipfuel-toggle" className="text-sm">FlipFuel (37g)</Label>
+                </div>
               </div>
             </div>
           </CardHeader>

@@ -24,6 +24,7 @@ A web-based calculator to help determine the remaining fuel in isobutane caniste
   - Perune
 - Multiple canister sizes (110g, 230g, 450g)
 - Toggle between grams and ounces
+- FlipFuel adapter support (automatically adjusts for the 37g adapter weight)
 - Real-time weight validation
 - Visual fuel level indicator
 - Detailed canister information
@@ -31,6 +32,16 @@ A web-based calculator to help determine the remaining fuel in isobutane caniste
 - Progressive Web App (PWA) support
 - Works offline
 - No installation required
+
+## Using with FlipFuel
+
+The calculator includes support for the [FlipFuel adapter](https://flipfuel.co) - a device that allows you to safely transfer fuel between canisters. When weighing a canister with a FlipFuel attached:
+
+1. Toggle the FlipFuel switch in the calculator
+2. Enter the total weight (canister + FlipFuel)
+3. The calculator will automatically subtract the FlipFuel's weight (37g) to give you accurate fuel readings
+
+This ensures accurate measurements even when the FlipFuel adapter is attached to your canister.
 
 ## Development
 
